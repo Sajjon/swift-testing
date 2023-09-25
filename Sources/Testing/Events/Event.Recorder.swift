@@ -225,7 +225,7 @@ extension Event.Recorder {
 }
 
 
-fileprivate enum ProgressSymbols {
+public enum ProgressSymbols: Sendable {
 
     case hourglass
     case sun
