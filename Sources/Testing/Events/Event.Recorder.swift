@@ -308,7 +308,7 @@ extension ProgressSymbols {
  
 }
 extension ProgressSymbols {
-  static var `default` = Self.moon
+  public static var `default` = Self.moon
   
   func stringFor(tick: Int, options: Set<Event.Recorder.Option>) -> String {
     precondition(options.contains(.useSFSymbols))
