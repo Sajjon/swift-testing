@@ -122,22 +122,22 @@ private let _resetANSIEscapeCode = "\(_ansiEscapeCodePrefix)0m"
 extension Event.Recorder {
   /// An enumeration describing the symbols used as prefixes when writing
   /// output.
-  private enum _Symbol {
+  fileprivate enum _Symbol {
     /// The default symbol to use.
     case `default`
-
+    
     /// The symbol to use when a test is skipped.
     case skip
-
+    
     /// The symbol to use when a test passes.
     case pass(hasKnownIssues: Bool = false)
-
+    
     /// The symbol to use when a test fails.
     case fail
-
+    
     /// The symbol to use when an expectation includes a difference description.
     case difference
-
+    
 #if os(macOS) || (os(iOS) && targetEnvironment(macCatalyst))
     /// The SF Symbols character corresponding to this instance.
     private var _sfSymbolCharacter: Character {
@@ -165,7 +165,7 @@ extension Event.Recorder {
       }
     }
 #endif
-
+    
     /// The Unicode character corresponding to this instance.
     private var _unicodeCharacter: Character {
 #if SWT_TARGET_OS_APPLE || os(Linux)
@@ -221,6 +221,68 @@ extension Event.Recorder {
       return " "
 #endif
     }
+  }
+}
+
+
+fileprivate enum ProgressSymbols {
+  case emoji(Emoji)
+  case sfSymbol(SFSymbol)
+  fileprivate enum Emoji {
+    case moon
+  }
+  fileprivate enum SFSymbol {
+    case hourglass
+//    case battery
+//    case clock
+  }
+}
+extension ProgressSymbols.Emoji {
+  var series: [String] {
+    switch self {
+    case .moon:
+      return ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
+    }
+  }
+  func stringFor(tick: Int) -> String {
+    series[tick % series.count]
+  }
+}
+extension ProgressSymbols.SFSymbol {
+  var series: [Character] {
+    switch self {
+    case .hourglass:
+      return [
+        "\u{100589}", // `hourglass.tophalf.filled`
+        "\u{100587}", // `hourglass
+        "\u{100588}", // `hourglass.bottomhalf.filled`
+      ]
+    }
+  }
+  func stringFor(tick: Int) -> String {
+    String(series[tick % series.count])
+  }
+}
+extension ProgressSymbols {
+  static let `default` = Self.emoji(.moon)
+  func stringFor(tick: Int, options: Set<Event.Recorder.Option>) -> String {
+    switch self {
+    case let .emoji(emoji): return emoji.stringFor(tick: tick)
+    case let .sfSymbol(sfSymbol):
+      precondition(options.contains(.useSFSymbols))
+      var str = sfSymbol.stringFor(tick: tick)
+      if options.contains(.useANSIEscapeCodes) {
+        str += " "
+      }
+      return str
+    }
+    
+  }
+}
+
+//let available: [String] = ProgressSymbols.default.stringFor(tick: tick)
+
+extension Event.Recorder._Symbol {
 
     /// Get the string value for this symbol with the given write options.
     ///
@@ -342,7 +404,7 @@ extension Event.Recorder {
 
     return (issueCount, knownIssueCount, totalIssueCount,  description)
   }
-}
+
 
 extension Tag {
   /// Get an ANSI escape code that sets the foreground text color to this tag's
@@ -522,12 +584,9 @@ extension Event.Recorder {
         let elapsed = _descriptionOfNanoseconds(nanoseconds)
         return elapsed
       }()
-      let symbol: String = {
-        let available: [String] = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
-        let index = tick % available.count
-        return available[index]
-      }()
-      let tick = "\(symbol) Test \(testName) running, for \(elapsed).\n"
+
+      let tickSymbol = ProgressSymbols.default.stringFor(tick: tick, options: options)
+      let tick = "\(tickSymbol) Test \(testName) running, for \(elapsed).\n"
       return String.erasePreviousLine + tick
 
     case let .testSkipped(skipInfo):
