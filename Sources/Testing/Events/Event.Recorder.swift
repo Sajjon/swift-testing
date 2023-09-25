@@ -240,8 +240,30 @@ enum ASNIColor: String {
 
 extension ProgressSymbols {
   
+  private var radiance: [Character] {
+    [
+      "\u{1001ef}",  // 􀇯
+      "\u{1001f1}",  // 􀇱
+      "\u{1001f2}",  // 􀇲
+      "\u{101239}",  // 􁈹
+      "\u{101485}",  // 􁒅
+      "\u{101239}",  // 􁈹 // repeat
+      "\u{1001f2}",  // 􀇲
+      "\u{1001f1}",  // 􀇱
+    ]
+  }
+  
   var series: [(Character, ASNIColor)] {
     switch self {
+    case .radianceYellow:
+      return radiance.map { ($0, .yellowHI) }
+      
+    case .radianceBlue:
+      return radiance.map { ($0, .blueHI) }
+      
+    case .radianceGreen:
+      return radiance.map { ($0, .green) }
+      
     case .hourglass:
       return [
         ("\u{100589}", .blueHI) , // `hourglass.tophalf.filled`
@@ -306,11 +328,6 @@ extension ProgressSymbols {
         ("\u{1006e8}", .green),         // 􀛨
         ("\u{10088b}", .green),         // 􀢋
       ]
-      
-    case .clock:
-      return Array<Character>(["\u{1001b8}"]).map {
-        ($0, .blueHI)
-      }
     }
   }
   
