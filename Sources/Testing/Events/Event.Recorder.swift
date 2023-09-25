@@ -264,7 +264,7 @@ extension ProgressSymbols.SFSymbol {
   }
 }
 extension ProgressSymbols {
-  static let `default` = Self.emoji(.moon)
+  static let `default` = Self.sfSymbol(.hourglass)
   func stringFor(tick: Int, options: Set<Event.Recorder.Option>) -> String {
     switch self {
     case let .emoji(emoji): return emoji.stringFor(tick: tick)
