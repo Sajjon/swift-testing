@@ -226,76 +226,69 @@ extension Event.Recorder {
 
 
 fileprivate enum ProgressSymbols {
-  case emoji(Emoji)
-  case sfSymbol(SFSymbol)
-  fileprivate enum Emoji {
-    case moon
-  }
-  fileprivate enum SFSymbol {
+
     case hourglass
     case sun
 //    case battery
 //    case clock
-  }
 }
-extension ProgressSymbols.Emoji {
-  var series: [String] {
-    switch self {
-    case .moon:
-      return ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
-    }
-  }
-  func stringFor(tick: Int) -> String {
-    series[tick % series.count]
-  }
+
+enum ASNIColor: String {
+
+  case orangeRegular = "33m"
+  case orangeHI = "93m"
+  case yellowRegular = "1;33m"
+  case yellowHI = "1;93m"
+  case blueRegular = "34m"
+  case blueHI = "94m"
 }
-extension ProgressSymbols.SFSymbol {
-  var series: [Character] {
+
+extension ProgressSymbols {
+  
+  var series: [(Character, ASNIColor)] {
     switch self {
     case .hourglass:
       return [
-        "\u{100589}", // `hourglass.tophalf.filled`
-        "\u{100587}", // `hourglass
-        "\u{100588}", // `hourglass.bottomhalf.filled`
+        ("\u{100589}", .blueHI) , // `hourglass.tophalf.filled`
+        ("\u{100587}", .blueHI) , // `hourglass
+        ("\u{100588}", .blueHI) , // `hourglass.bottomhalf.filled`
       ]
     case .sun:
       return [
-        "\u{1001b5}", // 􀆵 `sun.dust`
-        "\u{1001b7}", // 􀆷 `sun.haze`
-        "\u{1001ab}", // 􀆫 `sun.min`
-        "\u{1001ad}", // 􀆭 `sun.max`
-        "\u{1001ae}", // 􀆮 `sun.max.fill`
-        "\u{1001ac}", // 􀆬 `sun.min.fill`
-        "\u{1001b8}", // 􀆸 `sun.haze.fill`
-        "\u{1001b6}", // 􀆶 `sun.dust.fill`
+        ("\u{1001b5}", .orangeHI), // 􀆵 `sun.dust`
+        ("\u{1001b7}", .orangeRegular), // 􀆷 `sun.haze`
+        ("\u{1001ab}", .yellowHI), // 􀆫 `sun.min`
+        ("\u{1001ad}", .yellowRegular), // 􀆭 `sun.max`
+        ("\u{1001ae}", .yellowRegular), // 􀆮 `sun.max.fill`
+        ("\u{1001ac}", .yellowHI), // 􀆬 `sun.min.fill`
+        ("\u{1001b8}", .orangeRegular), // 􀆸 `sun.haze.fill`
+        ("\u{1001b6}", .orangeHI), // 􀆶 `sun.dust.fill`
       ]
     }
   }
-  func stringFor(tick: Int) -> String {
-    String(series[tick % series.count])
-  }
+  
+ 
 }
 extension ProgressSymbols {
-  static let `default` = Self.sfSymbol(.sun)
+  static let `default` = Self.sun
+  
   func stringFor(tick: Int, options: Set<Event.Recorder.Option>) -> String {
-    switch self {
-    case let .emoji(emoji): return emoji.stringFor(tick: tick)
-    case let .sfSymbol(sfSymbol):
-      precondition(options.contains(.useSFSymbols))
-      var str = sfSymbol.stringFor(tick: tick)
-      if options.contains(.useANSIEscapeCodes) {
-        str += " "
-        let highIntensityCyan = "96m"
-        let colorCode = highIntensityCyan
-        str = "\(_ansiEscapeCodePrefix)\(colorCode)\(str)\(_resetANSIEscapeCode)"
-      }
-      return str
+    precondition(options.contains(.useSFSymbols))
+   
+    let sfSymbolAdjusted = Int((Double(tick) / 2.0).rounded(.up)) // only every second tick for SF symbol
+    let boundedTick = sfSymbolAdjusted % series.count
+    let (char, color) = series[boundedTick]
+    var str = String(char)
+    
+    if options.contains(.useANSIEscapeCodes) {
+      str += " "
+      str = "\(_ansiEscapeCodePrefix)\(color.rawValue)\(str)\(_resetANSIEscapeCode)"
     }
+    return str
     
   }
 }
 
-//let available: [String] = ProgressSymbols.default.stringFor(tick: tick)
 
 extension Event.Recorder._Symbol {
 
