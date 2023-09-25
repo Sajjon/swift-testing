@@ -233,6 +233,7 @@ fileprivate enum ProgressSymbols {
   }
   fileprivate enum SFSymbol {
     case hourglass
+    case sun
 //    case battery
 //    case clock
   }
@@ -257,6 +258,17 @@ extension ProgressSymbols.SFSymbol {
         "\u{100587}", // `hourglass
         "\u{100588}", // `hourglass.bottomhalf.filled`
       ]
+    case .sun:
+      return [
+        "\u{1001b5}", // 􀆵 `sun.dust`
+        "\u{1001b7}", // 􀆷 `sun.haze`
+        "\u{1001ab}", // 􀆫 `sun.min`
+        "\u{1001ad}", // 􀆭 `sun.max`
+        "\u{1001ae}", // 􀆮 `sun.max.fill`
+        "\u{1001ac}", // 􀆬 `sun.min.fill`
+        "\u{1001b8}", // 􀆸 `sun.haze.fill`
+        "\u{1001b6}", // 􀆶 `sun.dust.fill`
+      ]
     }
   }
   func stringFor(tick: Int) -> String {
@@ -264,7 +276,7 @@ extension ProgressSymbols.SFSymbol {
   }
 }
 extension ProgressSymbols {
-  static let `default` = Self.sfSymbol(.hourglass)
+  static let `default` = Self.sfSymbol(.sun)
   func stringFor(tick: Int, options: Set<Event.Recorder.Option>) -> String {
     switch self {
     case let .emoji(emoji): return emoji.stringFor(tick: tick)
@@ -273,6 +285,9 @@ extension ProgressSymbols {
       var str = sfSymbol.stringFor(tick: tick)
       if options.contains(.useANSIEscapeCodes) {
         str += " "
+        let highIntensityCyan = "96m"
+        let colorCode = highIntensityCyan
+        str = "\(_ansiEscapeCodePrefix)\(colorCode)\(str)\(_resetANSIEscapeCode)"
       }
       return str
     }
