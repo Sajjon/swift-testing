@@ -232,6 +232,7 @@ fileprivate enum ProgressSymbols {
 //    case battery
     case clock
   case moon
+  case numPad
 }
 
 enum ASNIColor: String {
@@ -279,6 +280,24 @@ extension ProgressSymbols {
         ("\u{1001b8}", .orangeRegular), // 􀆸 `sun.haze.fill`
         ("\u{1001b6}", .orangeHI), // 􀆶 `sun.dust.fill`
       ]
+      
+    case .numPad:
+      return [
+        "\u{1009b2}", // 􀦲
+        "\u{1009b3}", // 􀦳
+        "\u{1009b4}", // 􀦴
+        "\u{1009b5}", // 􀦵
+        "\u{1009b6}", // 􀦶
+        "\u{1009b7}", // 􀦷
+        "\u{1009b8}", // 􀦸
+        "\u{1009b9}", // 􀦹
+        "\u{1009ba}", // 􀦺
+        "\u{1009bb}", // 􀦻
+        "\u{1009bc}", // 􀦼
+      ].map {
+        ($0, .blueHI)
+      }
+      
     case .clock:
       return Array<Character>(["\u{1001b8}"]).map {
         ($0, .blueHI)
@@ -289,7 +308,7 @@ extension ProgressSymbols {
  
 }
 extension ProgressSymbols {
-  static let `default` = Self.moon
+  static var `default` = Self.moon
   
   func stringFor(tick: Int, options: Set<Event.Recorder.Option>) -> String {
     precondition(options.contains(.useSFSymbols))
