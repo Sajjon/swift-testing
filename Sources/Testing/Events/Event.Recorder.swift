@@ -225,14 +225,15 @@ extension Event.Recorder {
 }
 
 
-public enum ProgressSymbols: Sendable {
-
-    case hourglass
-    case sun
-//    case battery
-    case clock
+public enum ProgressSymbols: Sendable, CaseIterable {
+  
+  case hourglass
+  case sun
+  case battery
+  case clock
   case moon
   case numPad
+  case lattice
 }
 
 enum ASNIColor: String {
@@ -243,6 +244,7 @@ enum ASNIColor: String {
   case yellowHI = "1;93m"
   case blueRegular = "34m"
   case blueHI = "94m"
+  case green = "92m"
 }
 
 extension ProgressSymbols {
@@ -284,7 +286,6 @@ extension ProgressSymbols {
     case .numPad:
       return [
         "\u{1009b2}", // 􀦲
-        "\u{1009b3}", // 􀦳
         "\u{1009b4}", // 􀦴
         "\u{1009b5}", // 􀦵
         "\u{1009b6}", // 􀦶
@@ -294,9 +295,26 @@ extension ProgressSymbols {
         "\u{1009ba}", // 􀦺
         "\u{1009bb}", // 􀦻
         "\u{1009bc}", // 􀦼
+//        "\u{1009b3}", // 􀦳
       ].map {
         ($0, .blueHI)
       }
+      
+    case .lattice:
+      return [
+        ("\u{100d3e}", .yellowRegular), // 􀴾 aqi
+        ("\u{100d3f}", .yellowHI), // 􀴿 aqi.medium
+      ]
+      
+    case .battery:
+      return [
+        ("\u{1006ea}", .orangeHI),      // 􀛪
+        ("\u{1006e9}", .orangeRegular), // 􀛩
+        ("\u{100eb6}", .yellowHI),      // 􀺶
+        ("\u{100eb8}", .yellowHI),      // 􀺸
+        ("\u{1006e8}", .green),         // 􀛨
+        ("\u{10088b}", .green),         // 􀢋
+      ]
       
     case .clock:
       return Array<Character>(["\u{1001b8}"]).map {
@@ -312,8 +330,9 @@ extension ProgressSymbols {
   
   func stringFor(tick: Int, options: Set<Event.Recorder.Option>) -> String {
     precondition(options.contains(.useSFSymbols))
-   
-    let sfSymbolAdjusted = Int((Double(tick) / 2.0).rounded(.up)) // only every second tick for SF symbol
+    let count = self.series.count
+    let scale = Double(count) / Double(8)
+    let sfSymbolAdjusted = Int((Double(tick) * scale).rounded(.up)) // only every second tick for SF symbol
     let boundedTick = sfSymbolAdjusted % series.count
     let (char, color) = series[boundedTick]
     var str = String(char)
