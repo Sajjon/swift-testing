@@ -8,6 +8,9 @@
 // See https://swift.org/CONTRIBUTORS.txt for Swift project authors
 //
 
+private var _hasEverTicked = false
+
+
 extension Event {
   /// A type which handles ``Event`` instances and outputs representations of
   /// them as human-readable strings.
@@ -751,12 +754,24 @@ extension Event.Recorder {
 
       let tickSymbol = ProgressSymbol.default.stringFor(tick: tick, options: options)
       let tick = "\(tickSymbol) Test \(testName) running, for \(elapsed)."
-      return [
-        .restoreCursor,
-        .erasePreviousLine,
-        tick,
-        .saveCursor,
-      ].joined(separator: "")
+      
+      if _hasEverTicked {
+        return [
+          .restoreCursor,
+          .eraseTheEntireLine,
+          tick,
+          .saveCursor,
+        ].joined(separator: "")
+      } else {
+        _hasEverTicked = true
+        return [
+          .erasePreviousLine,
+          tick,
+          .saveCursor,
+        ].joined(separator: "")
+      }
+      
+ 
 
     case let .testSkipped(skipInfo):
       let test = event.test!
