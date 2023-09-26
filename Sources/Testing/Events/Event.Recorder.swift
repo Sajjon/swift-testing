@@ -114,8 +114,7 @@ extension Event {
 // MARK: -
 
 /// The ANSI escape code prefix.
-private let _ansiEscapeCodeWithoutBracket = "\u{001B}"
-private let _ansiEscapeCodePrefix = _ansiEscapeCodeWithoutBracket + "["
+private let _ansiEscapeCodePrefix = "\u{001B}["
 
 /// The ANSI escape code to reset text output to default settings.
 private let _resetANSIEscapeCode = "\(_ansiEscapeCodePrefix)0m"
@@ -228,7 +227,7 @@ extension Event.Recorder {
 
 
 
-enum ASNIColor: String {
+enum ANSIColor: String {
 
   case orangeRegular = "33m"
   case orangeHI = "93m"
@@ -254,7 +253,7 @@ extension ProgressSymbol.SFSymbol {
     ]
   }
   
-  var series: [(Character, ASNIColor)] {
+  var series: [(Character, ANSIColor)] {
     switch self {
     case .radianceYellow:
       return radiance.map { ($0, .yellowHI) }
@@ -330,23 +329,6 @@ extension ProgressSymbol.SFSymbol {
         ("\u{10088b}", .green),         // 􀢋
       ]
     }
-  }
-  
-  func stringFor(tick: Int, options: Set<Event.Recorder.Option>) -> String {
-    precondition(options.contains(.useSFSymbols))
-    let count = self.series.count
-    let scale = Double(count) / Double(8)
-    let sfSymbolAdjusted = Int((Double(tick) * scale).rounded(.up)) // only every second tick for SF symbol
-    let boundedTick = sfSymbolAdjusted % series.count
-    let (char, color) = series[boundedTick]
-    var str = String(char)
-    
-    if options.contains(.useANSIEscapeCodes) {
-      str += " "
-      str = "\(_ansiEscapeCodePrefix)\(color.rawValue)\(str)\(_resetANSIEscapeCode)"
-    }
-    return str
-    
   }
 }
 
@@ -424,21 +406,7 @@ extension ProgressSymbol.Unicode {
     }
   }
   
-  func stringFor(tick: Int, options: Set<Event.Recorder.Option>) -> String {
-    precondition(options.contains(.useSFSymbols))
-    let count = self.series.count
-    let scale = Double(count) / Double(8)
-    let sfSymbolAdjusted = Int((Double(tick) * scale).rounded(.up)) // only every second tick for SF symbol
-    let boundedTick = sfSymbolAdjusted % series.count
-    var str = String(series[boundedTick])
-    
-    if options.contains(.useANSIEscapeCodes) {
-      str += " "
-      str = "\(_ansiEscapeCodePrefix)\(str)\(_resetANSIEscapeCode)"
-    }
-    return str
-    
-  }
+
 }
 
 extension ProgressSymbol {
@@ -446,13 +414,27 @@ extension ProgressSymbol {
   
   
   func stringFor(tick: Int, options: Set<Event.Recorder.Option>) -> String {
-    switch self {
-    case let .sfSymbol(sfSymbol):
-      return sfSymbol.stringFor(tick: tick, options: options)
-    case let .unicode(unicode):
-      return unicode.stringFor(tick: tick, options: options)
+    let series: [(Character, ANSIColor)] = {
+      switch self {
+      case let .sfSymbol(sfSymbol):
+        return sfSymbol.series
+      case let .unicode(unicode):
+        return unicode.series.map { ($0, .yellowHI) }
+      }
+    }()
+    
+    let count = series.count
+    let scale = Double(count) / Double(8)
+    let sfSymbolAdjusted = Int((Double(tick) * scale).rounded(.up)) // only every second tick for SF symbol
+    let boundedTick = sfSymbolAdjusted % series.count
+    let (char, color) = series[boundedTick]
+    var str = String(char)
+    
+    if options.contains(.useANSIEscapeCodes) {
+      str += " "
+      str = "\(_ansiEscapeCodePrefix)\(color.rawValue)\(str)\(_resetANSIEscapeCode)"
     }
-  
+    return str
     
   }
 }
@@ -625,10 +607,10 @@ extension String {
     "\(_ansiEscapeCodePrefix)2K"
   }
   static var restoreCursor: Self {
-    "\(_ansiEscapeCodeWithoutBracket) 8"
+    "\(_ansiEscapeCodePrefix)8"
   }
   static var saveCursor: Self {
-    "\(_ansiEscapeCodeWithoutBracket) 7"
+    "\(_ansiEscapeCodePrefix)7"
   }
   static var erasePreviousLine: Self {
     moveCursorUp(lines: 1) + eraseTheEntireLine
