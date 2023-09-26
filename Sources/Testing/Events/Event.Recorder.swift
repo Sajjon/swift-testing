@@ -768,13 +768,13 @@ extension Event.Recorder {
       }()
 
       let tickSymbol = ProgressSymbol.default.stringFor(tick: tick, options: options)
-      let tick = "\(tickSymbol) Test \(testName) running, for \(elapsed).\n"
+      let tick = "\(tickSymbol) Test \(testName) running, for \(elapsed)."
       return [
         .restoreCursor,
         .erasePreviousLine,
         tick,
         .saveCursor,
-      ].joined(separator: "")
+      ].joined(separator: "") + "\n"
 
     case let .testSkipped(skipInfo):
       let test = event.test!
