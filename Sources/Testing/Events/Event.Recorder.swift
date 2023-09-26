@@ -704,6 +704,7 @@ extension Event.Recorder {
       break
 
     case .testStarted:
+      _hasEverTicked = false
       let test = event.test!
       $context.withLock { context in
         context.testData.insertValue(.init(), at: test.id.keyPathRepresentation)
@@ -717,6 +718,7 @@ extension Event.Recorder {
       return "\(symbol) Test \(testName) started.\n"
 
     case .testEnded:
+      _hasEverTicked = true
       let test = event.test!
       let id = test.id
       let testDataGraph = context.testData.subgraph(at: id.keyPathRepresentation)
@@ -756,21 +758,21 @@ extension Event.Recorder {
       let tickSymbol = ProgressSymbol.default.stringFor(tick: tick, options: options)
       let tickString = "\(tickSymbol) Test \(testName) running, for \(elapsed)."
       
-//      if _hasEverTicked {
+      if _hasEverTicked {
         return [
           .restoreCursor,
-          .erasePreviousLine,
-          tickString,
-          .saveCursor,
+          .eraseTheEntireLine,
+          tickString + " 1️⃣",
         ].joined(separator: "")
-//      } else {
-//        _hasEverTicked = true
-//        return [
-//          .erasePreviousLine,
-//          tickString,
-//          "\n",
-//        ].joined(separator: "") + .saveCursor
-//      }
+      } else {
+        _hasEverTicked = true
+        return [
+          .erasePreviousLine,
+          .saveCursor,
+          tickString + " 2️⃣",
+          "\n"
+        ].joined(separator: "")
+      }
       
  
 
