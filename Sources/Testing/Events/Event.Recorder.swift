@@ -604,8 +604,9 @@ extension Tag {
 }
 
 extension String {
+  /// Moves cursor to beginning of line, #linnes many lines up
   static func moveCursorUp(lines: Int) -> Self {
-    "\(_ansiEscapeCodePrefix)\(lines)A"
+    "\(_ansiEscapeCodePrefix)\(lines)F"
   }
   static var eraseTheEntireLine: Self {
     "\(_ansiEscapeCodePrefix)2K"
@@ -616,6 +617,7 @@ extension String {
   static var restoreCursor: Self {
     "\(_ansiEscapeCodePrefix)u"
   }
+
   static var erasePreviousLine: Self {
     moveCursorUp(lines: 1) + eraseTheEntireLine
   }
