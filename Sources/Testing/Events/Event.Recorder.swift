@@ -114,7 +114,8 @@ extension Event {
 // MARK: -
 
 /// The ANSI escape code prefix.
-private let _ansiEscapeCodePrefix = "\u{001B}["
+private let _ansiEscapeCodeWithoutBracket = "\u{001B}"
+private let _ansiEscapeCodePrefix = _ansiEscapeCodeWithoutBracket + "["
 
 /// The ANSI escape code to reset text output to default settings.
 private let _resetANSIEscapeCode = "\(_ansiEscapeCodePrefix)0m"
@@ -238,7 +239,7 @@ enum ASNIColor: String {
   case green = "92m"
 }
 
-extension ProgressSymbols {
+extension ProgressSymbol.SFSymbol {
   
   private var radiance: [Character] {
     [
@@ -331,11 +332,6 @@ extension ProgressSymbols {
     }
   }
   
- 
-}
-extension ProgressSymbols {
-  public static var `default` = Self.moon
-  
   func stringFor(tick: Int, options: Set<Event.Recorder.Option>) -> String {
     precondition(options.contains(.useSFSymbols))
     let count = self.series.count
@@ -350,6 +346,113 @@ extension ProgressSymbols {
       str = "\(_ansiEscapeCodePrefix)\(color.rawValue)\(str)\(_resetANSIEscapeCode)"
     }
     return str
+    
+  }
+}
+
+extension ProgressSymbol.Unicode {
+  
+  var series: [Character] {
+    switch self {
+    case .braille:
+      return [
+        "\u{2800}", // ⠀
+        "\u{2801}", // ⠁
+        "\u{2802}", // ⠂
+        "\u{2803}", // ⠃
+        "\u{2804}", // ⠄
+        "\u{2805}", // ⠅
+        "\u{2806}", // ⠆
+        "\u{2807}", // ⠇
+        "\u{2808}", // ⠈
+        "\u{2809}", // ⠉
+        "\u{280a}", // ⠊
+        "\u{280b}", // ⠋
+        "\u{280c}", // ⠌
+        "\u{280d}", // ⠍
+        "\u{280e}", // ⠎
+        "\u{280f}", // ⠏
+        "\u{2810}", // ⠐
+        "\u{2811}", // ⠑
+        "\u{2812}", // ⠒
+        "\u{2813}", // ⠓
+        "\u{2814}", // ⠔
+        "\u{2815}", // ⠕
+        "\u{2816}", // ⠖
+        "\u{2817}", // ⠗
+        "\u{2818}", // ⠘
+        "\u{2819}", // ⠙
+        "\u{281a}", // ⠚
+        "\u{281b}", // ⠛
+        "\u{281c}", // ⠜
+        "\u{281d}", // ⠝
+        "\u{281e}", // ⠞
+        "\u{281f}", // ⠟
+        "\u{2820}", // ⠠
+        "\u{2821}", // ⠡
+        "\u{2822}", // ⠢
+        "\u{2823}", // ⠣
+        "\u{2824}", // ⠤
+        "\u{2825}", // ⠥
+        "\u{2826}", // ⠦
+        "\u{2827}", // ⠧
+        "\u{2828}", // ⠨
+        "\u{2829}", // ⠩
+        "\u{282a}", // ⠪
+        "\u{282b}", // ⠫
+        "\u{282c}", // ⠬
+        "\u{282d}", // ⠭
+        "\u{282e}", // ⠮
+        "\u{282f}", // ⠯
+        "\u{2830}", // ⠰
+        "\u{2831}", // ⠱
+        "\u{2832}", // ⠲
+        "\u{2833}", // ⠳
+        "\u{2834}", // ⠴
+        "\u{2835}", // ⠵
+        "\u{2836}", // ⠶
+        "\u{2837}", // ⠷
+        "\u{2838}", // ⠸
+        "\u{2839}", // ⠹
+        "\u{283a}", // ⠺
+        "\u{283b}", // ⠻
+        "\u{283c}", // ⠼
+        "\u{283d}", // ⠽
+        "\u{283e}", // ⠾
+        "\u{283f}", // ⠿
+      ]
+    }
+  }
+  
+  func stringFor(tick: Int, options: Set<Event.Recorder.Option>) -> String {
+    precondition(options.contains(.useSFSymbols))
+    let count = self.series.count
+    let scale = Double(count) / Double(8)
+    let sfSymbolAdjusted = Int((Double(tick) * scale).rounded(.up)) // only every second tick for SF symbol
+    let boundedTick = sfSymbolAdjusted % series.count
+    var str = String(series[boundedTick])
+    
+    if options.contains(.useANSIEscapeCodes) {
+      str += " "
+      str = "\(_ansiEscapeCodePrefix)\(str)\(_resetANSIEscapeCode)"
+    }
+    return str
+    
+  }
+}
+
+extension ProgressSymbol {
+  public static var `default` = Self.unicode(.braille)
+  
+  
+  func stringFor(tick: Int, options: Set<Event.Recorder.Option>) -> String {
+    switch self {
+    case let .sfSymbol(sfSymbol):
+      return sfSymbol.stringFor(tick: tick, options: options)
+    case let .unicode(unicode):
+      return unicode.stringFor(tick: tick, options: options)
+    }
+  
     
   }
 }
@@ -521,6 +624,12 @@ extension String {
   static var eraseTheEntireLine: Self {
     "\(_ansiEscapeCodePrefix)2K"
   }
+  static var restoreCursor: Self {
+    "\(_ansiEscapeCodeWithoutBracket) 8"
+  }
+  static var saveCursor: Self {
+    "\(_ansiEscapeCodeWithoutBracket) 7"
+  }
   static var erasePreviousLine: Self {
     moveCursorUp(lines: 1) + eraseTheEntireLine
   }
@@ -658,9 +767,14 @@ extension Event.Recorder {
         return elapsed
       }()
 
-      let tickSymbol = ProgressSymbols.default.stringFor(tick: tick, options: options)
+      let tickSymbol = ProgressSymbol.default.stringFor(tick: tick, options: options)
       let tick = "\(tickSymbol) Test \(testName) running, for \(elapsed).\n"
-      return String.erasePreviousLine + tick
+      return [
+        .restoreCursor,
+        .erasePreviousLine,
+        tick,
+        .saveCursor,
+      ].joined(separator: "")
 
     case let .testSkipped(skipInfo):
       let test = event.test!
