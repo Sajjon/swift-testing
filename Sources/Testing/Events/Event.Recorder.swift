@@ -754,22 +754,22 @@ extension Event.Recorder {
       }()
 
       let tickSymbol = ProgressSymbol.default.stringFor(tick: tick, options: options)
-      let tick = "\(tickSymbol) Test \(testName) running, for \(elapsed)."
+      let tickString = "\(tickSymbol) Test \(testName) running, for \(elapsed)."
       
       if _hasEverTicked {
         return [
           .restoreCursor,
           .eraseTheEntireLine,
-          tick,
+          tickString,
           .saveCursor,
         ].joined(separator: "")
       } else {
         _hasEverTicked = true
         return [
           .erasePreviousLine,
-          tick,
+          tickString,
           .saveCursor,
-        ].joined(separator: "")
+        ].joined(separator: "") + "\n"
       }
       
  
