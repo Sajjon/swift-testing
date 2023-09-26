@@ -768,8 +768,8 @@ extension Event.Recorder {
         return [
           .erasePreviousLine,
           tickString,
-          .saveCursor,
-        ].joined(separator: "") + "\n"
+          "\n",
+        ].joined(separator: "") + .saveCursor
       }
       
  
