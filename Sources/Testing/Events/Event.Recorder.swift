@@ -609,11 +609,11 @@ extension String {
   static var eraseTheEntireLine: Self {
     "\(_ansiEscapeCodePrefix)2K"
   }
-  static var restoreCursor: Self {
-    "\(_ansiEscapeCodePrefix)8"
-  }
   static var saveCursor: Self {
-    "\(_ansiEscapeCodePrefix)7"
+    String("\u{001B}") + "7"
+  }
+  static var restoreCursor: Self {
+    String("\u{001B}") + "8"
   }
   static var erasePreviousLine: Self {
     moveCursorUp(lines: 1) + eraseTheEntireLine
