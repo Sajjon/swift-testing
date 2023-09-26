@@ -117,7 +117,8 @@ extension Event {
 // MARK: -
 
 /// The ANSI escape code prefix.
-private let _ansiEscapeCodePrefix = "\u{001B}["
+private let _ansiEscapeCodePrefixWithoutBracket = "\u{001B}"
+private let _ansiEscapeCodePrefix = "\(_ansiEscapeCodePrefixWithoutBracket)["
 
 /// The ANSI escape code to reset text output to default settings.
 private let _resetANSIEscapeCode = "\(_ansiEscapeCodePrefix)0m"
@@ -610,10 +611,10 @@ extension String {
     "\(_ansiEscapeCodePrefix)2K"
   }
   static var saveCursor: Self {
-    String("\u{001B}") + "7"
+    "\(_ansiEscapeCodePrefix)s"
   }
   static var restoreCursor: Self {
-    String("\u{001B}") + "8"
+    "\(_ansiEscapeCodePrefix)u"
   }
   static var erasePreviousLine: Self {
     moveCursorUp(lines: 1) + eraseTheEntireLine
