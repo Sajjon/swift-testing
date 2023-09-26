@@ -756,7 +756,7 @@ extension Event.Recorder {
         .erasePreviousLine,
         tick,
         .saveCursor,
-      ].joined(separator: "") + "\n"
+      ].joined(separator: "")
 
     case let .testSkipped(skipInfo):
       let test = event.test!
